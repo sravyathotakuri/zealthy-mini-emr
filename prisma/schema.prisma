@@ -1,0 +1,74 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // or "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * ===================== MODELS =====================
+ */
+
+model Patient {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  name          String
+  phone         String?
+  passwordHash  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  appointments  Appointment[]
+  prescriptions Prescription[]
+  UserSession   UserSession[]
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  date      DateTime
+  reason    String?
+
+  provider       String? // free-form provider name
+  repeatSchedule String? // "none" | "weekly" | "monthly"
+  repeatUntil    DateTime? // end date for recurrence
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model Prescription {
+  id         Int    @id @default(autoincrement())
+  patientId  Int
+  medication String
+  dosage     String
+
+  quantity       Int?
+  refillDate     DateTime?
+  refillSchedule String? // e.g. "monthly"
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, medication, dosage], name: "patient_med_dose_unique")
+}
+
+model MedicationCatalog {
+  id             Int    @id @default(autoincrement())
+  medicationName String
+  dosage         String
+
+  // This is what your seed + app use for upsert/find:
+  @@unique([medicationName, dosage], name: "medicationName_dosage")
+}
+
+// Optional if you want DB sessions and you're NOT using NextAuth.
+model UserSession {
+  id           String   @id @default(cuid())
+  patientId    Int
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}

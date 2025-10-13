@@ -1,0 +1,76 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DB_PROVIDER") // "sqlite" or "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  fullName       String
+  passwordHash   String
+  dateOfBirth    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+}
+
+model Appointment {
+  id          Int       @id @default(autoincrement())
+  patientId   Int
+  startsAt    DateTime
+  endsAt      DateTime
+  reason      String?
+  status      String     @default("scheduled") // scheduled|completed|cancelled
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  patient     Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  @@unique([patientId, startsAt], name: "patient_start_time")
+
+}
+
+model MedicationCatalog {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  strength      String?
+  form          String?
+  manufacturer  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id             Int               @id @default(autoincrement())
+  patientId      Int
+  medicationId   Int
+  dosage         String            // e.g. "1 tablet once daily"
+  directions     String?           // free text SIG
+  refills        Int               @default(0)
+  startDate      DateTime? 
+  endDate        DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  patient        Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  medication     MedicationCatalog @relation(fields: [medicationId], references: [id], onDelete: Restrict)
+}
+
+// Optional if you’re NOT using NextAuth and want DB-backed sessions.
+model UserSession {
+  id           String   @id @default(cuid())
+  patientId    Int
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}

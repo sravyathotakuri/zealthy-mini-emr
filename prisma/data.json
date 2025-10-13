@@ -1,0 +1,8 @@
+{
+  "medications": [
+    { "name": "Atorvastatin", "strength": "10 mg", "form": "tablet", "manufacturer": "Generic" },
+    { "name": "Lisinopril",   "strength": "20 mg", "form": "tablet", "manufacturer": "Generic" },
+    { "name": "Metformin",    "strength": "500 mg","form": "tablet", "manufacturer": "Generic" },
+    { "name": "Amoxicillin",  "strength": "500 mg","form": "capsule","manufacturer": "Generic" }
+  ]
+}
