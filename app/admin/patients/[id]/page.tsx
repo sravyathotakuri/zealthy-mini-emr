@@ -14,14 +14,17 @@ import {
 
 export const dynamic = "force-dynamic";
 
- export default async function PatientDetail({
-   params,
- }: {
-   params: { id: string };
- }) {
-   const id = Number(params.id);
+export default async function PatientDetail({
+  params,
+}: {
+  // ✅ Next 15 strict typing: params is a Promise
+  params: Promise<{ id: string }>;
+}) {
+  // ✅ unwrap the Promise and parse to number
+  const { id } = await params;
+  const idNum = Number(id);
 
-  if (Number.isNaN(id)) {
+  if (Number.isNaN(idNum)) {
     return (
       <main className="p-6">
         <p className="text-red-600">Invalid patient id.</p>
@@ -33,7 +36,7 @@ export const dynamic = "force-dynamic";
   }
 
   const patient = await prisma.patient.findUnique({
-    where: { id },
+    where: { id: idNum }, // ✅ use idNum
     select: { id: true, name: true, email: true, phone: true },
   });
   if (!patient) {
@@ -49,7 +52,7 @@ export const dynamic = "force-dynamic";
 
   const [appointments, prescriptions, medCatalog] = await Promise.all([
     prisma.appointment.findMany({
-      where: { patientId: id },
+      where: { patientId: idNum }, // ✅ use idNum
       orderBy: { date: "desc" },
       select: {
         id: true,
@@ -61,9 +64,16 @@ export const dynamic = "force-dynamic";
       },
     }),
     prisma.prescription.findMany({
-      where: { patientId: id },
+      where: { patientId: idNum }, // ✅ use idNum
       orderBy: [{ medication: "asc" }, { dosage: "asc" }],
-      select: { id: true, medication: true, dosage: true, quantity: true, refillDate: true, refillSchedule: true },
+      select: {
+        id: true,
+        medication: true,
+        dosage: true,
+        quantity: true,
+        refillDate: true,
+        refillSchedule: true,
+      },
     }),
     prisma.medicationCatalog.findMany({
       orderBy: [{ medicationName: "asc" }, { dosage: "asc" }],
@@ -87,10 +97,10 @@ export const dynamic = "force-dynamic";
           {patient.email}{patient.phone ? ` • ${patient.phone}` : ""}
         </p>
         <p className="text-sm">
-    <Link href={`/portal?id=${patient.id}`} className="underline">
-      Open in Portal
-    </Link>
-  </p>
+          <Link href={`/portal/${patient.id}`} className="underline">
+            Open in Portal
+          </Link>
+        </p>
 
         <form action={updatePatientAction} className="space-y-2 border p-3 rounded max-w-xl">
           <input type="hidden" name="id" value={patient.id} />
@@ -124,67 +134,68 @@ export const dynamic = "force-dynamic";
 
 
                 {/* Update appointment */}
-<form action={updateAppointmentAction} className="grid md:grid-cols-4 gap-3 items-end">
-  <input type="hidden" name="id" value={a.id} />
+                <form action={updateAppointmentAction} className="grid md:grid-cols-4 gap-3 items-end">
+                  <input type="hidden" name="id" value={a.id} />
 
-  <div>
-    <label className="block text-xs font-medium">Date/Time</label>
-    <input
-      className="border p-2 rounded w-full"
-      type="datetime-local"
-      name="date"
-      defaultValue={new Date(a.date).toISOString().slice(0, 16)}
-      required
-    />
-  </div>
+                  <div>
+                    <label className="block text-xs font-medium">Date/Time</label>
+                    <input
+                      className="border p-2 rounded w-full"
+                      type="datetime-local"
+                      name="date"
+                      defaultValue={new Date(a.date).toISOString().slice(0, 16)}
+                      required
+                    />
+                  </div>
 
-  <div>
-    <label className="block text-xs font-medium">Provider</label>
-    <input
-      className="border p-2 rounded w-full"
-      name="provider"
-      defaultValue={a.provider ?? ""}
-      placeholder="Dr. Smith"
-    />
-  </div>
+                  <div>
+                    <label className="block text-xs font-medium">Provider</label>
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="provider"
+                      defaultValue={a.provider ?? ""}
+                      placeholder="Dr. Smith"
+                    />
+                  </div>
 
-  <div>
-    <label className="block text-xs font-medium">Repeat</label>
-    <select
-      className="border p-2 rounded w-full"
-      name="repeatSchedule"
-      defaultValue={a.repeatSchedule ?? ""}
-    >
-      <option value="">None</option>
-      <option value="weekly">Weekly</option>
-      <option value="monthly">Monthly</option>
-    </select>
-  </div>
+                  <div>
+                    <label className="block text-xs font-medium">Repeat</label>
+                    <select
+                      className="border p-2 rounded w-full"
+                      name="repeatSchedule"
+                      defaultValue={a.repeatSchedule ?? ""}
+                    >
+                      <option value="">None</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
 
-  <div>
-    <label className="block text-xs font-medium">Repeat until</label>
-    <input
-      className="border p-2 rounded w-full"
-      type="date"
-      name="repeatUntil"
-      defaultValue={a.repeatUntil ? new Date(a.repeatUntil).toISOString().slice(0, 10) : ""}
-    />
-  </div>
+                  <div>
+                    <label className="block text-xs font-medium">Repeat until</label>
+                    <input
+                      className="border p-2 rounded w-full"
+                      type="date"
+                      name="repeatUntil"
+                      defaultValue={a.repeatUntil ? new Date(a.repeatUntil).toISOString().slice(0, 10) : ""}
+                    />
+                  </div>
 
-  <div className="md:col-span-4">
-    <label className="block text-xs font-medium">Reason</label>
-    <input
-      className="border p-2 rounded w-full"
-      name="reason"
-      defaultValue={a.reason ?? ""}
-      placeholder="General Checkup"
-    />
-  </div>
+                  <div className="md:col-span-4">
+                    <label className="block text-xs font-medium">Reason</label>
+                    <input
+                      className="border p-2 rounded w-full"
+                      name="reason"
+                      defaultValue={a.reason ?? ""}
+                      placeholder="General Checkup"
+                    />
+                  </div>
 
-  <div className="flex gap-2">
-    <button className="border px-3 py-1 rounded" type="submit">Update</button>
-  </div>
-</form>
+                  <div className="flex gap-2">
+                    <button className="border px-3 py-1 rounded" type="submit">Update</button>
+                  </div>
+                </form>
+
                 <form action={deleteAppointmentAction} className="mt-2">
                   <input type="hidden" name="id" value={a.id} />
                   <button className="border px-3 py-1 rounded" type="submit">Delete</button>
@@ -196,7 +207,7 @@ export const dynamic = "force-dynamic";
 
         {/* Create */}
         <form action={createAppointmentAction} className="space-y-3 border p-3 rounded">
-          <input type="hidden" name="patientId" value={patient.id} />
+          <input type="hidden" name="patientId" value={idNum} /> {/* ✅ use idNum here */}
 
           <div className="grid md:grid-cols-4 gap-3">
             <div>
@@ -283,7 +294,7 @@ export const dynamic = "force-dynamic";
                       <option value="weekly">Weekly</option>
                     </select>
                   </div>
-
+                  
                   <button className="border px-3 py-1 rounded" type="submit">Update</button>
                 </form>
 
@@ -298,7 +309,7 @@ export const dynamic = "force-dynamic";
 
         {/* Create Rx */}
         <form action={createPrescriptionAction} className="space-y-3 border p-3 rounded">
-          <input type="hidden" name="patientId" value={patient.id} />
+          <input type="hidden" name="patientId" value={idNum} /> {/* ✅ use idNum here */}
           <div className="grid md:grid-cols-4 gap-3">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium">Medication</label>

@@ -1,27 +1,29 @@
-// app/admin/patients/actions.ts
-"use server";
+// app/admin/patients/new/page.tsx
+import { createPatientAction } from "./actions";
 
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/db";
-import { redirect } from "next/navigation";
+export default function NewPatientPage() {
+  return (
+    <main className="p-6 space-y-4">
+      <h1 className="text-xl font-semibold">New Patient</h1>
 
-export async function createPatientAction(formData: FormData) {
-  const name = String(formData.get("name") || "").trim();
-  const email = String(formData.get("email") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
-  const password = String(formData.get("password") || "");
+      <form action={createPatientAction} className="space-y-3 border p-3 rounded max-w-xl">
+        <div>
+          <label className="block text-sm font-medium">Full name</label>
+          <input className="border p-2 rounded w-full" name="name" required />
+        </div>
 
-  if (!name || !email || !password) {
-    // You can throw or return; throwing will show a Next error overlay
-    throw new Error("Name, email, and password are required");
-  }
+        <div>
+          <label className="block text-sm font-medium">Email</label>
+          <input className="border p-2 rounded w-full" type="email" name="email" required />
+        </div>
 
-  const passwordHash = await bcrypt.hash(password, 10);
+        <div>
+          <label className="block text-sm font-medium">Phone (optional)</label>
+          <input className="border p-2 rounded w-full" name="phone" />
+        </div>
 
-  const p = await prisma.patient.create({
-    data: { name, email, phone: phone || null, passwordHash },
-    select: { id: true },
-  });
-
-  redirect(`/admin/patients/${p.id}`);
+        <button className="border px-3 py-1 rounded" type="submit">Create</button>
+      </form>
+    </main>
+  );
 }
