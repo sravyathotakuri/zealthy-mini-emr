@@ -4,10 +4,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // If you later add a non-pooled URL, you can also add:
+  // directUrl = env("DIRECT_URL")
 }
-
 
 /**
  * ===================== MODELS =====================
@@ -27,27 +28,25 @@ model Patient {
 }
 
 model Appointment {
-  id        Int      @id @default(autoincrement())
-  patientId Int
-  date      DateTime
-  reason    String?
-
-  provider       String? // free-form provider name
-  repeatSchedule String? // "none" | "weekly" | "monthly"
-  repeatUntil    DateTime? // end date for recurrence
+  id             Int       @id @default(autoincrement())
+  patientId      Int
+  date           DateTime
+  reason         String?
+  provider       String?
+  repeatSchedule String?
+  repeatUntil    DateTime?
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model Prescription {
-  id         Int    @id @default(autoincrement())
-  patientId  Int
-  medication String
-  dosage     String
-
+  id             Int       @id @default(autoincrement())
+  patientId      Int
+  medication     String
+  dosage         String
   quantity       Int?
   refillDate     DateTime?
-  refillSchedule String? // e.g. "monthly"
+  refillSchedule String?
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
@@ -59,11 +58,9 @@ model MedicationCatalog {
   medicationName String
   dosage         String
 
-  // This is what your seed + app use for upsert/find:
   @@unique([medicationName, dosage], name: "medicationName_dosage")
 }
 
-// Optional if you want DB sessions and you're NOT using NextAuth.
 model UserSession {
   id           String   @id @default(cuid())
   patientId    Int
