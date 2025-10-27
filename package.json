@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed": "ts-node prisma/seed.ts"
+    "postinstall": "prisma generate && prisma migrate deploy && prisma db seed || echo 'no seed'",
+    "vercel-build": "prisma generate && prisma migrate deploy && prisma db seed || echo 'no seed'; next build"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
