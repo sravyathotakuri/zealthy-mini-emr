@@ -14,13 +14,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function PatientDetail({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id: idStr } = await params;
-  const id = Number(idStr);
+ export default async function PatientDetail({
+   params,
+ }: {
+   params: { id: string };
+ }) {
+   const id = Number(params.id);
 
   if (Number.isNaN(id)) {
     return (
